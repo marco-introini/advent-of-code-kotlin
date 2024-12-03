@@ -22,9 +22,9 @@ fun main() {
         for (line in input) {
             val numbers = mutableListOf<Int>()
             val parts = line.split(" ")
-            for (part in parts) {
-                if (part.isNotBlank()) {
-                    val number = part.toInt()
+            parts.forEach {
+                if (it.isNotBlank()) {
+                    val number = it.toInt()
                     numbers.add(number)
                 }
             }
