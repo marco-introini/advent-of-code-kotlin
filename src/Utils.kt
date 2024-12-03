@@ -21,24 +21,3 @@ fun String.md5() = BigInteger(1, MessageDigest.getInstance("MD5").digest(toByteA
  */
 fun Any?.println() = println(this)
 
-fun areNumbersMonotonic(numbers: List<Int>): Boolean {
-    if (numbers.isEmpty() || numbers.size == 1) {
-        return true
-    }
-
-    var isIncreasing = true
-    var isDecreasing = true
-
-    for (i in 1 until numbers.size) {
-        if (numbers[i] < numbers[i - 1]) {
-            isIncreasing = false
-        }
-        if (numbers[i] > numbers[i - 1]) {
-            isDecreasing = false
-        }
-    }
-
-    return isIncreasing || isDecreasing
-}
-
-
