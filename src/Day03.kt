@@ -2,7 +2,7 @@ fun main() {
     fun part1(input: List<String>): Int {
         var total = 0
         input.forEach {
-            val (_, mult) = processPattern(it)
+            val (_, mult) = giveMultiplicationResult(it)
             total += mult
         }
         return total
@@ -11,7 +11,7 @@ fun main() {
     fun part2(input: List<String>): Int {
         var stringTotal = input.joinToString("")
         val replaced = removeSegmentsBetweenDontAndDo(stringTotal)
-        val (_, mult) = processPattern(replaced)
+        val (_, mult) = giveMultiplicationResult(replaced)
         return mult
     }
 
@@ -23,14 +23,14 @@ fun main() {
     println(part2(input))
 }
 
-fun processPattern(input: String): Pair<Int, Int> {
+fun giveMultiplicationResult(input: String): Pair<Int, Int> {
     val regex = Regex("""mul\((\d+),(\d+)\)""")
     val matches = regex.findAll(input)
 
     var occurrences = 0
     var mult = 0
 
-    for (match in matches) {
+    matches.forEach { match ->
         val num1 = match.groupValues[1].toInt()
         val num2 = match.groupValues[2].toInt()
         mult += num1 * num2
