@@ -10,10 +10,10 @@ fun isReportSafe(report: List<Int>): Boolean {
     return (allIncreasing || allDecreasing) && smallDifference
 }
 
-fun isReportSafeDampened(report: List<Int>): Boolean {
-    val dampenedLists = report.indices.map { report.filterIndexed { i, _ -> i != it } }
-    return dampenedLists.count(::isReportSafe) > 0 || isReportSafe(report)
-}
+fun isReportSafeDampened(report: List<Int>): Boolean =
+    report.indices.map {
+        report.filterIndexed { i, _ -> i != it }
+    }.count(::isReportSafe) > 0 || isReportSafe(report)
 
 fun main() {
     fun part1(input: List<String>): Int {
