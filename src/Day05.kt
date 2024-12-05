@@ -51,20 +51,17 @@ fun main() {
     fun part2(input: List<String>): Int {
         val middleValues = mutableListOf<Int>()
 
-        fun reorderList(list: List<Int>): List<Int> {
-            val precedenceMap = mutableMapOf<Int, MutableList<Int>>()
-
-            rules.forEach { (first, second) ->
-                precedenceMap.computeIfAbsent(first) { mutableListOf() }.add(second)
-            }
-
-            return list.sortedWith { a, b ->
-                when {
-                    precedenceMap[a]?.contains(b) == true -> -1
-                    precedenceMap[b]?.contains(a) == true -> 1
-                    else -> 0
+        fun swapIfNotOk(list: MutableList<Int>): MutableList<Int> {
+            for (i in list.indices) {
+                for (j in i + 1 until list.size) {
+                    if (rules.contains(Pair(list[j], list[i]))) {
+                        val temp = list[i]
+                        list[i] = list[j]
+                        list[j] = temp
+                    }
                 }
             }
+            return list
         }
 
         loadRules(input)
@@ -72,17 +69,16 @@ fun main() {
         input.forEach { list ->
             if (list.isEmpty()) return@forEach
             if (!list.contains("|")) {
-                val numberList = list.split(",").map(String::toInt)
-                if (!checkIfOk(numberList)) {
-                    val sortedList = reorderList(numberList)
-                    val middleValue = if (sortedList.size % 2 == 0) {
-                        println("Error: lista pari!")
-                        0
-                    } else {
-                        sortedList[sortedList.size / 2]
-                    }
-                    middleValues.add(middleValue)
+                var numberList = list.split(",").map(String::toInt).toMutableList()
+                if (checkIfOk(numberList)) return@forEach
+                numberList = swapIfNotOk(numberList)
+                val middleValue = if (numberList.size % 2 == 0) {
+                    println("Error: lista pari!")
+                    0
+                } else {
+                    numberList[numberList.size / 2]
                 }
+                middleValues.add(middleValue)
             }
         }
 
