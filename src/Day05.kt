@@ -1,31 +1,32 @@
 fun main() {
-    fun part1(input: List<String>): Int {
+    val rules = mutableListOf<Pair<Int, Int>>()
 
-        val rules = mutableListOf<Pair<Int, Int>>()
-        val middleValues = mutableListOf<Int>()
-
-        fun checkIfOk(list: List<Int>): Boolean {
-            for ((a, b) in rules) {
-                val indexA = list.indexOf(a)
-                val indexB = list.indexOf(b)
-
-                if (indexA != -1 && indexB != -1 && indexA >= indexB) {
-                    return false
-                }
-            }
-            return true
-        }
-
-        // first part of file contains rules. I need to store all rules
+    fun loadRules(input: List<String>) {
         input.forEach {
             if (it.contains("|")) {
-                // it's a rule
                 val (first, second) = it.split("|").map(String::toInt)
                 rules.add(Pair(first, second))
             }
         }
+    }
 
-        // next. Check if it's ok
+    fun checkIfOk(list: List<Int>): Boolean {
+        for ((a, b) in rules) {
+            val indexA = list.indexOf(a)
+            val indexB = list.indexOf(b)
+
+            if (indexA != -1 && indexB != -1 && indexA >= indexB) {
+                return false
+            }
+        }
+        return true
+    }
+
+    fun part1(input: List<String>): Int {
+        val middleValues = mutableListOf<Int>()
+
+        loadRules(input)
+
         for (list in input) {
             if (list.isEmpty())
                 continue
@@ -48,7 +49,44 @@ fun main() {
     }
 
     fun part2(input: List<String>): Int {
-        return 0
+        val middleValues = mutableListOf<Int>()
+
+        fun reorderList(list: List<Int>): List<Int> {
+            val precedenceMap = mutableMapOf<Int, MutableList<Int>>()
+
+            rules.forEach { (first, second) ->
+                precedenceMap.computeIfAbsent(first) { mutableListOf() }.add(second)
+            }
+
+            return list.sortedWith { a, b ->
+                when {
+                    precedenceMap[a]?.contains(b) == true -> -1
+                    precedenceMap[b]?.contains(a) == true -> 1
+                    else -> 0
+                }
+            }
+        }
+
+        loadRules(input)
+
+        input.forEach { list ->
+            if (list.isEmpty()) return@forEach
+            if (!list.contains("|")) {
+                val numberList = list.split(",").map(String::toInt)
+                if (!checkIfOk(numberList)) {
+                    val sortedList = reorderList(numberList)
+                    val middleValue = if (sortedList.size % 2 == 0) {
+                        println("Error: lista pari!")
+                        0
+                    } else {
+                        sortedList[sortedList.size / 2]
+                    }
+                    middleValues.add(middleValue)
+                }
+            }
+        }
+
+        return middleValues.sum()
     }
 
     check(part1(readInput("Day05_test")) == 143)
