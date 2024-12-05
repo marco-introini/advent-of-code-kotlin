@@ -116,7 +116,6 @@ fun main() {
 
 
     check(part1(readInput("Day04_test")) == 18)
-    println(part2(readInput("Day04_test")))
     check(part2(readInput("Day04_test")) == 9)
 
     val input = readInput("Day04")
