@@ -51,17 +51,49 @@ fun main() {
     fun part2(input: List<String>): Int {
         val middleValues = mutableListOf<Int>()
 
-        fun swapIfNotOk(list: MutableList<Int>): MutableList<Int> {
-            for (i in list.indices) {
-                for (j in i + 1 until list.size) {
-                    if (rules.contains(Pair(list[j], list[i]))) {
-                        val temp = list[i]
-                        list[i] = list[j]
-                        list[j] = temp
+        fun topologicalSort(list: List<Int>, rules: List<Pair<Int, Int>>): List<Int> {
+            val inDegree = mutableMapOf<Int, Int>()
+            val adjacencyList = mutableMapOf<Int, MutableList<Int>>()
+
+            // Inizializza il grado entrante e la lista di adiacenza
+            for (element in list) {
+                inDegree[element] = 0
+                adjacencyList[element] = mutableListOf()
+            }
+
+            // Crea il grafo diretto basato sulle regole
+            for ((first, second) in rules) {
+                adjacencyList[first]?.add(second)
+                inDegree[second] = inDegree.getOrDefault(second, 0) + 1
+            }
+
+            // Inizializza una coda con elementi con grado entrante zero
+            val queue = ArrayDeque<Int>()
+            for (element in inDegree.filter { it.value == 0 }.keys) {
+                queue.add(element)
+            }
+
+            val sortedList = mutableListOf<Int>()
+
+            // Esegui l'ordinamento
+            while (queue.isNotEmpty()) {
+                val node = queue.removeFirst()
+                sortedList.add(node)
+
+                for (neighbor in adjacencyList[node] ?: emptyList()) {
+                    inDegree[neighbor] = inDegree[neighbor]!! - 1
+                    if (inDegree[neighbor] == 0) {
+                        queue.add(neighbor)
                     }
                 }
             }
-            return list
+
+            // Verifica se esiste un ciclo
+            if (sortedList.size != list.size) {
+                throw IllegalArgumentException("Il grafo contiene un ciclo, quindi non è possibile eseguire un ordinamento topologico.")
+            }
+
+            return sortedList
         }
 
         loadRules(input)
@@ -69,9 +101,17 @@ fun main() {
         input.forEach { list ->
             if (list.isEmpty()) return@forEach
             if (!list.contains("|")) {
-                var numberList = list.split(",").map(String::toInt).toMutableList()
-                if (checkIfOk(numberList)) return@forEach
-                numberList = swapIfNotOk(numberList)
+                var numberList = list.split(",").map(String::toInt)
+                if (checkIfOk(numberList.toList())) return@forEach
+                var contatore = 0
+                while (!checkIfOk(numberList.toList())) {
+                    contatore++
+                    if (contatore > 1000) {
+                        println("Error: contatore superato!")
+                    }
+                    numberList = topologicalSort(numberList, rules)
+                }
+
                 val middleValue = if (numberList.size % 2 == 0) {
                     println("Error: lista pari!")
                     0
