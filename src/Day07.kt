@@ -1,63 +1,74 @@
 import java.math.BigInteger
+import kotlin.math.pow
 
 enum class Operation {
-    ADD, MULTIPLY
+    ADD, MULTIPLY, CONCATENATE
 }
 
 fun main() {
 
-    data class Command(var operation: Operation, val operand: BigInteger)
-
-    fun calculate(list: List<Command>): BigInteger {
-        var result: BigInteger = list.first().operand
-        var item = 0;
-        while (item < list.size-1 ) {
-            when (list[item].operation) {
-                Operation.ADD -> result += list[item+1].operand
-                Operation.MULTIPLY -> result *= list[item+1].operand
-            }
-            item++
-        }
-
-        return result
-    }
-
-    fun mustChangeSubsequentOperation(list: List<Command>, current: Int): Boolean {
-        list.forEachIndexed { index, command ->
-            if (index <= current) {
-                if (command.operation == Operation.ADD) return false
-            }
-        }
-        return true
-    }
-
     fun check(total: BigInteger, operands: List<BigInteger>): Boolean {
         val numOperands = operands.size - 1
-        val operations: MutableList<Command> = mutableListOf()
 
-        operands.forEach {
-            operations.add(Command(Operation.ADD, it))
-        }
-        var currentIterator = 0
-        while (operations.last().operation != Operation.MULTIPLY) {
-            if (calculate(operations) == total) {
-                print("OK ")
-                println(operations.map { it.operand })
-                return true
-            }
-            if (mustChangeSubsequentOperation(operations, currentIterator)) {
-                for (i in 0 until currentIterator) {
-                    operations[i].operation = Operation.ADD
+        fun evaluate(combination: List<Operation>): BigInteger {
+            var result = operands.first()
+            for (i in 0 until numOperands) {
+                when (combination[i]) {
+                    Operation.ADD -> result += operands[i + 1]
+                    Operation.MULTIPLY -> result *= operands[i + 1]
+                    else -> throw Exception("Invalid operation")
                 }
-                currentIterator++
-                operations[currentIterator].operation = Operation.MULTIPLY
             }
-            else {
-                operations.first { it.operation == Operation.ADD  }.operation = Operation.MULTIPLY
-            }
+            return result
         }
 
-        return false
+        val combinations = mutableListOf<List<Operation>>()
+        for (i in 0 until (1 shl numOperands)) {
+            val combination = mutableListOf<Operation>()
+            for (j in 0 until numOperands) {
+                if ((i shr j) and 1 == 0) {
+                    combination.add(Operation.ADD)
+                } else {
+                    combination.add(Operation.MULTIPLY)
+                }
+            }
+            combinations.add(combination)
+        }
+
+        return combinations.any { evaluate(it) == total }
+    }
+
+    fun checkWithConcatenation(total: BigInteger, operands: List<BigInteger>): Boolean {
+        val numOperands = operands.size - 1
+
+        fun evaluate(combination: List<Operation>): BigInteger {
+            var result = operands.first()
+            for (i in 0 until numOperands) {
+                when (combination[i]) {
+                    Operation.ADD -> result += operands[i + 1]
+                    Operation.MULTIPLY -> result *= operands[i + 1]
+                    Operation.CONCATENATE -> result = BigInteger(result.toString() + operands[i + 1].toString())
+                }
+            }
+            return result
+        }
+
+        val combinations = mutableListOf<List<Operation>>()
+        for (i in 0 until (3.0).pow(numOperands.toDouble()).toInt()) {
+            val combination = mutableListOf<Operation>()
+            var temp = i
+            for (j in 0 until numOperands) {
+                when (temp % 3) {
+                    0 -> combination.add(Operation.ADD)
+                    1 -> combination.add(Operation.MULTIPLY)
+                    2 -> combination.add(Operation.CONCATENATE)
+                }
+                temp /= 3
+            }
+            combinations.add(combination)
+        }
+
+        return combinations.any { evaluate(it) == total }
     }
 
 
@@ -75,8 +86,18 @@ fun main() {
         return sum
     }
 
-    fun part2(input: List<String>): Int {
-        return 0
+    fun part2(input: List<String>): BigInteger {
+        var sum = BigInteger.ZERO
+        input.forEach {
+            val result = it.substringBefore(":").toBigInteger()
+            val operands = it.substringAfter(": ")
+                .split(" ")
+                .map(String::toBigInteger)
+            if (checkWithConcatenation(result, operands)) {
+                sum += result
+            }
+        }
+        return sum
     }
 
     // Test if implementation meets criteria from the description, like:
