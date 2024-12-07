@@ -1,75 +1,84 @@
-
-fun countDistinctPositions(map: List<String>): Int {
-    // Direzioni: su, destra, giù, sinistra
-    val directions = listOf(Pair(0, -1), Pair(1, 0), Pair(0, 1), Pair(-1, 0))
-    var directionIndex = 0 // Inizio guardando su (indice 0)
-    var x = 0
-    var y = 0
-    val visitedPositions = mutableSetOf<Pair<Int, Int>>()
-
-    // Trova la posizione iniziale del guardiano (indicato con "^")
-    outer@ for (i in map.indices) {
-        for (j in map[i].indices) {
-            if (map[i][j] == '^') {
-                x = j
-                y = i
-                break@outer
-            }
-        }
-    }
-
-    // Ciclo fino a che il guardiano non esce dalla mappa
-    while (true) {
-        // Segna la posizione attuale come visitata
-        visitedPositions.add(Pair(x, y))
-
-        // Calcola la prossima posizione
-        val nextX = x + directions[directionIndex].first
-        val nextY = y + directions[directionIndex].second
-
-        // Controlla se la prossima posizione è valida
-        if (nextY in map.indices && nextX in map[nextY].indices && map[nextY][nextX] != '#') {
-            // Avanza nella nuova direzione
-            x = nextX
-            y = nextY
-        } else {
-            // Ruota a destra (90°)
-            directionIndex = (directionIndex + 1) % 4
-        }
-
-        // Se il guardiano esce dalla mappa, interrompi il ciclo
-        if (x !in map[0].indices || y !in map.indices) {
-            break
-        }
-
-        // Interrompi se tutte le direzioni sono bloccate (loop infinito evitato)
-        val blocked = (0 until 4).all { dir ->
-            val testX = x + directions[dir].first
-            val testY = y + directions[dir].second
-            testY !in map.indices || testX !in map[testY].indices || map[testY][testX] == '#'
-        }
-        if (blocked) break
-    }
-
-    return visitedPositions.size
+enum class Direction {
+    UP, RIGHT, DOWN, LEFT;
 }
 
+data class Guard(
+    val x: Int = -1,
+    val y: Int = -1,
+    val direction: Direction = Direction.UP,
+)
 
+fun Guard.isInArea(area: Array<CharArray>) = y in area.indices && x in area.first().indices
 
+fun Guard.mark(area: Array<CharArray>) {
+    if (area[y][x] != OBSTACLE) area[y][x] = MARKED
+}
+
+fun Guard.step() = when (direction) {
+    Direction.UP -> copy(y = y - 1)
+    Direction.RIGHT -> copy(x = x + 1)
+    Direction.DOWN -> copy(y = y + 1)
+    Direction.LEFT -> copy(x = x - 1)
+}
+
+fun Guard.isObstacle(area: Array<CharArray>): Boolean = area[y][x] == OBSTACLE
+
+fun Guard.turn(): Guard = copy(
+    direction = when (direction) {
+        Direction.UP -> Direction.RIGHT
+        Direction.RIGHT -> Direction.DOWN
+        Direction.DOWN -> Direction.LEFT
+        Direction.LEFT -> Direction.UP
+    }
+)
+
+const val GUARD = '^'
+const val MARKED = 'X'
+const val OBSTACLE = '#'
+
+private fun part1(input: List<String>): Int {
+    fun findGuard(field: List<String>): Guard {
+        field.forEachIndexed { y, row ->
+            if (GUARD in row)
+                row.forEachIndexed { x, pos ->
+                    if (pos == GUARD) return Guard(x, y)
+                }
+        }
+        // posizione NON valida
+        return Guard()
+    }
+
+    var guard = findGuard(input)
+    val map = input.map { it.toCharArray() }.toTypedArray()
+    while (guard.isInArea(map)) {
+        guard.mark(map) // spot was stepped on
+
+        val step = guard.step()
+        guard = if (step.isInArea(map) && step.isObstacle(map))
+            guard.turn()
+        else
+            step
+    }
+
+    return map.sumOf { row -> row.count { pos -> pos == MARKED } }
+}
+
+private fun part2(input: List<String>): Int {
+    return 0
+}
 
 fun main() {
-    fun part1(input: List<String>): Int {
-        return countDistinctPositions(input)
-    }
-
-    fun part2(input: List<String>): Int {
-        return 0
-    }
-
-    //check(part1(readInput("Day05_test")) == 143)
-    //check(part2(readInput("Day05_test")) == 123)
-
+    //val testInput = readInput("Day06_test")
     val input = readInput("Day06")
+
+
+    //part1(testInput).println()
+    //check(part1(testInput) == 41)
     part1(input).println()
-    part2(input).println()
+
+    //check(part2(listOf("don't()mul(4,2)-do()mul(1,2)yhf")) == 2)
+
+    //part2(testInput).println()
+    //check(part2(testInput) == 48)
+    //part2(input).println()
 }
