@@ -22,6 +22,15 @@ fun main() {
         return result
     }
 
+    fun mustChangeSubsequentOperation(list: List<Command>, current: Int): Boolean {
+        list.forEachIndexed { index, command ->
+            if (index <= current) {
+                if (command.operation == Operation.ADD) return false
+            }
+        }
+        return true
+    }
+
     fun check(total: BigInteger, operands: List<BigInteger>): Boolean {
         val numOperands = operands.size - 1
         val operations: MutableList<Command> = mutableListOf()
@@ -29,13 +38,23 @@ fun main() {
         operands.forEach {
             operations.add(Command(Operation.ADD, it))
         }
-        while (operations.find { it.operation == Operation.ADD } != null) {
+        var currentIterator = 0
+        while (operations.last().operation != Operation.MULTIPLY) {
             if (calculate(operations) == total) {
                 print("OK ")
                 println(operations.map { it.operand })
                 return true
             }
-            operations.find { it.operation == Operation.ADD }?.operation = Operation.MULTIPLY
+            if (mustChangeSubsequentOperation(operations, currentIterator)) {
+                for (i in 0 until currentIterator) {
+                    operations[i].operation = Operation.ADD
+                }
+                currentIterator++
+                operations[currentIterator].operation = Operation.MULTIPLY
+            }
+            else {
+                operations.first { it.operation == Operation.ADD  }.operation = Operation.MULTIPLY
+            }
         }
 
         return false
