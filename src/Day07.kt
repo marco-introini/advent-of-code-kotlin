@@ -9,13 +9,16 @@ fun main() {
     data class Command(var operation: Operation, val operand: BigInteger)
 
     fun calculate(list: List<Command>): BigInteger {
-        var result: BigInteger = BigInteger.ZERO;
-        list.forEach {
-            when (it.operation) {
-                Operation.ADD -> result += it.operand
-                Operation.MULTIPLY -> result *= it.operand
+        var result: BigInteger = list.first().operand
+        var item = 0;
+        while (item < list.size-1 ) {
+            when (list[item].operation) {
+                Operation.ADD -> result += list[item+1].operand
+                Operation.MULTIPLY -> result *= list[item+1].operand
             }
+            item++
         }
+
         return result
     }
 
@@ -27,10 +30,14 @@ fun main() {
             operations.add(Command(Operation.ADD, it))
         }
         while (operations.find { it.operation == Operation.ADD } != null) {
-            if (calculate(operations) == total) return true
+            if (calculate(operations) == total) {
+                print("OK ")
+                println(operations.map { it.operand })
+                return true
+            }
             operations.find { it.operation == Operation.ADD }?.operation = Operation.MULTIPLY
         }
-        println(operations.map { it.operand })
+
         return false
     }
 
@@ -42,8 +49,9 @@ fun main() {
             val operands = it.substringAfter(": ")
                 .split(" ")
                 .map(String::toBigInteger)
-            if (check(result, operands))
+            if (check(result, operands)){
                 sum += result
+            }
         }
         return sum
     }
