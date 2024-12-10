@@ -1,89 +1,100 @@
-fun main() {
+data class DiskPoint(val fileId: Int)
 
-    fun generateDisk(input: String): String {
-        var ret = ""
-        input.forEachIndexed { index, value ->
-            val intValue = Integer.parseInt(value.toString())
-            if (index % 2 == 0) {
-                for (i in 1..intValue) {
-                    ret += (index / 2).toString()
-                }
-            } else {
-                for (i in 1..intValue) {
-                    ret += '.'
-                }
+data class Disk(
+    val size: Int,
+    val map: MutableMap<Int, DiskPoint>
+) {
+    override fun toString(): String {
+        val stringBuilder = StringBuilder()
+        with(stringBuilder) {
+            for (i in 0 until size) {
+                append(map[i]?.fileId ?: '.')
             }
         }
-        return ret
+        return stringBuilder.toString()
     }
 
-    fun areDotsGrouped(charArray: CharArray): Boolean {
-        var foundDotGroup = false
-
-        var index = 0
-        while (index < charArray.size) {
-            if (charArray[index] == '.') {
-                if (!foundDotGroup) {
-                    foundDotGroup = true
-                }
-            } else {
-                if (foundDotGroup) {
-                    // Se abbiamo trovato un gruppo di `.` e ora troviamo un altro carattere
-                    // Questo significa che il gruppo di `.` è terminato
-                    // Verifica se un altro gruppo di `.` appare più avanti
-                    for (j in index until charArray.size) {
-                        if (charArray[j] == '.') {
-                            return false
-                        }
-                    }
-                    break
-                }
+    fun hasNoHoles(): Boolean {
+        val total = map.size
+        for (i in 0 until total) {
+            if (!map.containsKey(i)) {
+                return false
             }
-            index++
         }
-
         return true
     }
 
-    fun reArrange(input: String): String {
-        val charArray = input.toCharArray()
-        for (i in charArray.size - 1 downTo 0) {
-            if (areDotsGrouped(charArray)) {
-                return String(charArray)
-            }
-            if (charArray[i].isDigit()) {
-                for (j in charArray.indices) {
-                    if (charArray[j] == '.') {
-                        charArray[j] = charArray[i]
-                        charArray[i] = '.'
+    fun reArrange() {
+        for (i in size - 1 downTo 0) {
+            if (map.containsKey(i)) {
+                if (hasNoHoles()) {
+                    return
+                }
+                for (j in 0 until size) {
+                    if (!map.containsKey(j)) {
+                        val tempPoint = map[i]
+                        if (tempPoint != null) {
+                            map.remove(i)
+                            map[j] = tempPoint
+                            //println("Inserito il punto ${tempPoint} nella posizione ${j}")
+                            break
+                        } else println("Errore per i ${i} e j ${j}")
                     }
                 }
             }
         }
-        return String(charArray)
+    }
+}
+
+
+fun main() {
+
+    fun generateDisk(input: String): Disk {
+        var disk = mutableMapOf<Int, DiskPoint>()
+        var dimension = 0
+        input.forEachIndexed { index, value ->
+            val intValue = Integer.parseInt(value.toString())
+            if (index % 2 == 0) {
+                repeat(intValue) {
+                    disk[dimension] = DiskPoint(index / 2)
+                    dimension++
+                }
+            } else {
+                repeat(intValue) {
+                    dimension++
+                }
+            }
+        }
+
+        return Disk(dimension, disk)
     }
 
+
     fun part1(input: List<String>): Long {
-        val stringa = generateDisk(input[0])
-        val rearranged = reArrange(stringa).toCharArray()
+        val disk = generateDisk(input[0])
+        disk.reArrange()
 
         var result = 0L
-        rearranged.forEachIndexed() { index, it ->
-            if (it.isDigit()) {
-                result += it.toString().toInt() * index
-            }
+        disk.map.forEach() { index, it ->
+            result += index * it.fileId.toLong()
         }
 
         return result
     }
 
-    fun part2(input: List<String>): Int {
-        return 0
+    fun part2(input: List<String>): Long {
+        return 0L
     }
 
     val testInput = readInput("Day09_test")
-    check(generateDisk(testInput[0]) == "00...111...2...333.44.5555.6666.777.888899")
+    val disk = generateDisk(testInput[0])
+    println(disk.toString())
+    check(disk.toString() == "00...111...2...333.44.5555.6666.777.888899")
+    disk.reArrange()
+    println(disk)
+
     check(part1(testInput) == 1928L)
+    check(part2(testInput) == 2858L)
 
     val input = readInput("Day09")
     part1(input).println()
