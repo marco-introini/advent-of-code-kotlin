@@ -1,5 +1,3 @@
-import kotlin.collections.containsKey
-
 data class DiskPoint(val fileId: Int)
 
 data class Disk(
@@ -40,7 +38,7 @@ data class Disk(
                             map[j] = tempPoint
                             //println("Inserito il punto ${tempPoint} nella posizione ${j}")
                             break
-                        } else println("Errore per i ${i} e j ${j}")
+                        } else println("Errore per i $i e j $j")
                     }
                 }
             }
@@ -71,18 +69,25 @@ data class Disk(
     }
 
     fun reArrangeByLength() {
-        // Ordina gli entry della mappa in base al fileId in ordine decrescente
-        val sortedEntries = map.values.toSet()
+        // gli elementi sono già ordinati. Parto da quello con fileId maggiore
+        val maxValue = map.entries.maxBy { it.value.fileId }.value.fileId
 
-        for (entry in sortedEntries) {
-            val fileSize = map.count { it.value.fileId == entry.fileId }
-
+        for (i in maxValue downTo 1) {
+            val fileSize = map.count { it.value.fileId == i }
             val firstSpace = findFirstEmptySpace(fileSize)
+            val firstKey = map.keys.firstOrNull { key -> map[key]?.fileId == i }!!
+            //println("$i con inizio $firstKey -> dimensione $fileSize -> firstSpace $firstSpace")
 
-            if (firstSpace != null) {
-                val tempPoint = entry
+            if (firstSpace != null && (firstSpace < firstKey)) {
+                val tempPoint = DiskPoint(i)
+                val iterator = map.iterator()
+                while (iterator.hasNext()) {
+                    val entry = iterator.next()
+                    if (entry.value.fileId == tempPoint.fileId) {
+                        iterator.remove()
+                    }
+                }
                 for (i in firstSpace until firstSpace + fileSize) {
-                    map.filter { it.value.fileId == tempPoint.fileId }.forEach { map.remove(it.key) }
                     map[i] = tempPoint
                 }
             }
@@ -120,7 +125,7 @@ fun main() {
         disk.reArrange()
 
         var result = 0L
-        disk.map.forEach() { index, it ->
+        disk.map.forEach { index, it ->
             result += index * it.fileId.toLong()
         }
 
@@ -132,7 +137,7 @@ fun main() {
         disk.reArrangeByLength()
 
         var result = 0L
-        disk.map.forEach() { index, it ->
+        disk.map.forEach { index, it ->
             result += index * it.fileId.toLong()
         }
 
@@ -148,7 +153,7 @@ fun main() {
     println("TEST PART2")
     val disk2 = generateDisk(testInput[0])
     disk2.reArrangeByLength()
-    println(disk2.toString())
+    check(disk2.toString() == "00992111777.44.333....5555.6666.....8888..")
 
     check(part1(testInput) == 1928L)
     check(part2(testInput) == 2858L)
